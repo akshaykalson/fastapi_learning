@@ -85,7 +85,8 @@ def create_user(request: schemas.User, db: Session = Depends(get_db)):
     db.refresh(new_user)
     return new_user
 
-
-
-
+@app.get('/user')
+def get_user(db: Session = Depends(get_db)):
+    users = db.query(models.User).all()
+    return users
 
