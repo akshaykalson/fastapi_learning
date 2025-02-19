@@ -6,7 +6,7 @@ from typing import List  # Add this for response model
 
 app = FastAPI()
 
-models.Base.metadata.create_all(engine)
+models.Base.metadata.create_all(engine)  #this line will create any new table according to changes in models.py file
 
 def get_db():
     db = SessionLocal()
@@ -28,7 +28,7 @@ def get_all(db: Session = Depends(get_db)):
     blogs = db.query(models.Blog).all()
     return blogs
 
-@app.get('/blog/{id}', response_model=schemas.Blog)
+@app.get('/blog/{id}', response_model=schemas.ShowBlog) #since im using response model showblog, it will show only title and not body
 def show(id: int, db: Session = Depends(get_db)):
     blog = db.query(models.Blog).filter(models.Blog.id == id).first()
     if not blog:
@@ -66,6 +66,26 @@ def delete(id: int, db: Session = Depends(get_db)):
 
 @app.put('/blog/{id}', status_code=status.HTTP_202_ACCEPTED)
 def update(id, request: schemas.Blog, db: Session = Depends(get_db)):
-    db.query(models.Blog).filter(models.Blog.id == id).update({'title':'updated_title'})
+    blog = db.query(models.Blog).filter(models.Blog.id == id)
+    blog.update(
+        {
+            'title': request.title,
+            'body': request.body
+
+        }
+    )
+    db.commit()
     return 'updated successfully'
+
+@app.post('/user')
+def create_user(request: schemas.User, db: Session = Depends(get_db)):
+    new_user = models.User(name=request.name, email=request.email, password=request.password)
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
+
+
+
+
 
